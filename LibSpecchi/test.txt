@@ -2,17 +2,22 @@ class DMtest():
     def __init__(self):
         pass
     def getNActs(self):
-        acts = 100
+        acts = 10
         return acts
+    def setActsCommand(self, cmd):
+    	pass
 from LibSpecchi.influenceFunctionsMaker import IFMaker
-from m4.ott_sim.fake_interferometer import FakeInterferometer
-interf = FakeInterferometer()
+conf = '/Users/rm/eclipse-workspace/M4/m4/configuration/myConfig.yaml'
+from m4.configuration import start
+ott, interf = start.create_ott(conf)
 dm = DMtest()
 iff = IFMaker(dm, interf)
 
-cmd_matrix = iff.getHadamardMatrix()
-amplitude = np.ones(iff._nActs)
-iff._modesVector = np.arange(iff._nActs)
+
+#pezzetto matrice di comandi#
+cmd_matrix = iff._cmdMatrix #iff.getHadamardMatrix()
+amplitude = np.arange(10)
+iff._actsVector = np.arange(iff._nActs)
 template = np.array([1, -1, 1])
 n_push_pull = 1
 
@@ -20,8 +25,16 @@ from LibSpecchi.type.commandHistory import CmdHistory
 cmdH = CmdHistory(iff._nActs)
 
 command_history_matrix_to_apply, iff._tt_cmdH = \
-                    cmdH.shuffleCommandHistoryMaker(iff._modesVector,
+                    cmdH.shuffleCommandHistoryMaker(iff._actsVector,
                                                     amplitude,
                                                     cmd_matrix,
                                                     n_push_pull,
                                                     template)
+
+#tutto#
+modalBaseTag = 'Hadarmard10.fits'
+ampTag = 'ampTest10.fits'
+
+tt = iff.acquisition(1, modalBaseTag, ampTag, shuffle=False, template=None)
+
+cube = iff.analysis()

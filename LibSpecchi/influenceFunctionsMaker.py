@@ -5,7 +5,6 @@ Authors
 import os
 import numpy as np
 import copy
-import scipy
 from astropy.io import fits as pyfits
 from LibSpecchi.type.modalAmplitude import ModalAmplitude
 from LibSpecchi.type.modalBase import ModalBase
@@ -20,7 +19,8 @@ class IFMaker():
         """The constructor """
         self._dm = deformable_mirror
         self._interf = interferometer
-        self._nActs = deformable_mirror.getNActs() #qualcosa del genere
+        if deformable_mirror is not None:
+            self._nActs = deformable_mirror.getNActs() #qualcosa del genere
 
         #acquisizione
         self._nPushPull = None
@@ -33,21 +33,14 @@ class IFMaker():
         self._tt_cmdH = None
         self._indexingList = None
         self._tt = None
-        
+
         #analisi
         self._cube = None
-        self._rec = None
-        self._intMat = None
 
     @staticmethod
     def _storageFolder():
         """ Creates the path where to save measurement data"""
-        return 'NoPathHere'
-
-    def getHadamardMatrix(self):
-        mat = scipy.linalg.hadamard(128)
-        hadaMat = mat[0:self._nActs, 0:self._nActs]
-        return hadaMat
+        return '/Users/rm/Desktop/Arcetri/M4/Data/M4Data/OPTData/IFFunctions'
 
     def acquisition(self, n_push_pull, cmd_matrix_fits_file_name,
                         amplitude_fits_file_name,
@@ -89,7 +82,9 @@ class IFMaker():
         else:
             self._template = template
         self._amplitudeTag = amplitude_fits_file_name
+        self._amplitude = amplitude
         self._cmdMatrixTag = cmd_matrix_fits_file_name
+        self._cmdMatrix = cmd_matrix
 
         self._actsVector = np.arange(self._nActs)
         indexing_input = copy.copy(self._actsVector)
@@ -118,8 +113,8 @@ class IFMaker():
         for i in range(command_history_matrix_to_apply.shape[1]):
             self._dm.setActsCommand(command_history_matrix_to_apply[:, i]) #vecchia setShape
             masked_image = self._interf.acquire_phasemap(n_images)
-            file_name = 'image_%04d' %i
-            self._interf.save_phasemap(self, dove, file_name, masked_image)
+            file_name = 'image_%04d.fits' %i
+            self._interf.save_phasemap(dove, file_name, masked_image)
 
         return tt
 
@@ -128,11 +123,12 @@ class IFMaker():
         header = pyfits.Header()
         header['NPUSHPUL'] = self._nPushPull
         header['TT_CMDH'] = self._tt_cmdH
-        header['MODEVECT'] = self._actsVector
         header['CMDMAT'] = self._cmdMatrixTag
         header['AMP'] = self._amplitudeTag
+        header['NACTS'] = self._nActs
         pyfits.writeto(fits_file_name, self._indexingList, header)
         pyfits.append(fits_file_name, self._template)
+        pyfits.append(fits_file_name, self._actsVector)
 
 
     def _readTypeFromFitsNameTag(self, amplitude_fits_file_name,
@@ -162,14 +158,14 @@ class IFMaker():
 
     def analysis(self):
         cube = self._createCube()
-        self._saveCube('Cube.fits)')
+        self._saveCube('Cube.fits')
+        return cube
 
     def _createCube(self):
         '''
         Parameters
         ----------
                 tt: string
- 
 
         Returns
         -------
@@ -193,12 +189,12 @@ class IFMaker():
                 mis = k * self._indexingList.shape[1] * self._template.shape[0] \
                         + n * self._template.shape[0]
 
-                name = 'img_%04d.h5' %mis
+                name = 'image_%04d.fits' %mis
                 file_name = os.path.join(self._storageFolder(), self._tt, name)
                 image0 = self._interf.readImage4D(file_name) #creare questa funzione nell'interf prendendola da ic
                 image_list = [image0]
                 for l in range(1, self._template.shape[0]):
-                    name = 'img_%04d.h5' %(mis+l)
+                    name = 'image_%04d.fits' %(mis+l)
                     file_name = os.path.join(self._storageFolder(), self._tt, name)
                     ima = self._interf.readImage4D(file_name)
                     image_list.append(ima)
@@ -288,6 +284,13 @@ class IFMaker():
         """
         dove = os.path.join(self._storageFolder(), self._tt)
         file_name = os.path.join(dove, cube_name)
+        header = pyfits.Header()
+        header['NPUSHPUL'] = self._nPushPull
+        header['NACTS'] = self._nActs
+        pyfits.writeto(file_name, self._cube.data, header)
+        pyfits.append(file_name, self._cube.mask.astype(int))
+        pyfits.append(file_name, self._amplitude)
+        pyfits.append(file_name, self._actsVector)
 
     def getCube(self):
         '''
@@ -297,3 +300,37 @@ class IFMaker():
                     cube from analysis
         '''
         return self._cube
+
+    @staticmethod
+    def loadIFMaker(tt):
+        """ Creates the object using information contained in Cube
+
+        Parameters
+        ----------
+                fits_file_name: string
+                                cube file name path
+
+        Returns
+        -------
+                theObject: object
+                            analyzerIFF class object
+        """
+        theObject = IFMaker(None, None)
+        file_name = os.path.join(theObject._storageFolder(), tt, 'Cube.fits')
+        header = pyfits.getheader(file_name)
+        hduList = pyfits.open(file_name)
+        cube = np.ma.masked_array(hduList[0].data,
+                                  hduList[1].data.astype(bool))
+        cmd_amplitude = hduList[2].data
+        acts_vector = hduList[3].data
+        try:
+            n_push_pull = header['NPUSHPUL']
+        except KeyError:
+            n_push_pull = 1
+
+        theObject._nActs = header['NACTS']
+        theObject._actsVector = acts_vector
+        theObject._amplitude = cmd_amplitude
+        theObject._nPushPull = n_push_pull
+        theObject._cube = cube
+        return theObject

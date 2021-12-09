@@ -28,7 +28,7 @@ class ModalAmplitude():
     @staticmethod
     def _storageFolder():
         """ Creates the path where to save data"""
-        return 'NoPathHere'
+        return '/Users/rm/Desktop/Arcetri/M4/Data/M4Data/OPTData/ModalAmplitude'
 
     def getModalAmplitude(self):
         '''
