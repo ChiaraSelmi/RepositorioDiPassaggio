@@ -1,0 +1,27 @@
+class DMtest():
+    def __init__(self):
+        pass
+    def getNActs(self):
+        acts = 100
+        return acts
+from LibSpecchi.influenceFunctionsMaker import IFMaker
+from m4.ott_sim.fake_interferometer import FakeInterferometer
+interf = FakeInterferometer()
+dm = DMtest()
+iff = IFMaker(dm, interf)
+
+cmd_matrix = iff.getHadamardMatrix()
+amplitude = np.ones(iff._nActs)
+iff._modesVector = np.arange(iff._nActs)
+template = np.array([1, -1, 1])
+n_push_pull = 1
+
+from LibSpecchi.type.commandHistory import CmdHistory
+cmdH = CmdHistory(iff._nActs)
+
+command_history_matrix_to_apply, iff._tt_cmdH = \
+                    cmdH.shuffleCommandHistoryMaker(iff._modesVector,
+                                                    amplitude,
+                                                    cmd_matrix,
+                                                    n_push_pull,
+                                                    template)

@@ -3,7 +3,7 @@
 '''
 
 import os
-from m4.ground.timestamp import Timestamp
+from Lib.timestamp import Timestamp
 
 class TtFolder():
     """ Create a new folder using the generation of the tracking number """
@@ -19,10 +19,10 @@ class TtFolder():
             dove = all path generated
             tt = only tracking number
         """
-        self._tt = Timestamp.now()
-        dove = os.path.join(self._rootStoreFolder, self._tt)
+        tt = Timestamp.now()
+        dove = os.path.join(self._rootStoreFolder, tt)
         if os.path.exists(dove):
             raise OSError('Directory %s exists' % dove)
         else:
             os.makedirs(dove)
-        return dove, self._tt
+        return dove, tt
