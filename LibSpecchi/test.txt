@@ -40,5 +40,23 @@ tt = iff.acquisitionAndAnalysis(1, modalBaseTag, ampTag, shuffle=False, template
 
 #converter#
 tt = '20211210_111951'
-from LibSpecchi.influenceFunctionsMaker import IFMaker
-an = IFMaker.loadAnalyzerFromIFMaker(tt)
+
+
+
+
+#test per coordinate#
+ima = np.random.random((512, 512))
+from skimage.draw import circle as draw_circle
+circle = np.ones((512,512))
+rr, cc = draw_circle(250, 250, 100) 
+circle[rr, cc] = 0
+masked_ima = np.ma.masked_array(ima, mask=circle)
+
+size = np.array([masked_ima.shape[0], masked_ima.shape[1]])
+ima_x = np.arange(size[0], dtype = float)
+ima_y = np.arange(size[1], dtype = float)
+
+centro = [250,250]
+raggio = 100
+xx = (np.tile(ima_x, (size[0], 1))-centro[0]) / raggio
+yy = (np.tile(ima_y, (size[1], 1)).T-centro[1]) / raggio
