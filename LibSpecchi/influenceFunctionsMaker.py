@@ -33,6 +33,8 @@ class IFMaker():
         self._tt_cmdH = None
         self._indexingList = None
         self._tt = None
+        #da fare
+        self._coord = None
 
         #analisi
         self._cube = None
@@ -42,7 +44,7 @@ class IFMaker():
         """ Creates the path where to save measurement data"""
         return '/Users/rm/Desktop/Arcetri/M4/Data/M4Data/OPTData/IFFunctions'
 
-    def acquisition(self, n_push_pull, cmd_matrix_fits_file_name,
+    def acquisitionAndAnalysis(self, n_push_pull, cmd_matrix_fits_file_name,
                         amplitude_fits_file_name,
                         shuffle=False, template=None):
         '''
@@ -107,7 +109,6 @@ class IFMaker():
                                                     n_push_pull,
                                                     template)
         self._indexingList = cmdH.getIndexingList()
-        self._saveInfo(dove)
 
         n_images = 1
         for i in range(command_history_matrix_to_apply.shape[1]):
@@ -116,20 +117,21 @@ class IFMaker():
             file_name = 'image_%04d.fits' %i
             self._interf.save_phasemap(dove, file_name, masked_image)
 
+        self._coord = self._maskGeometryCalculator(masked_image)
+
+        #import code
+        #code.interact(local=dict(globals(), **locals()))
+        cube = self._createCube()
+        self._saveCube('Cube.fits')
         return tt
 
-    def _saveInfo(self, folder):
-        fits_file_name = os.path.join(folder, 'info.fits')
-        header = pyfits.Header()
-        header['NPUSHPUL'] = self._nPushPull
-        header['TT_CMDH'] = self._tt_cmdH
-        header['CMDMAT'] = self._cmdMatrixTag
-        header['AMP'] = self._amplitudeTag
-        header['NACTS'] = self._nActs
-        pyfits.writeto(fits_file_name, self._indexingList, header)
-        pyfits.append(fits_file_name, self._template)
-        pyfits.append(fits_file_name, self._actsVector)
+    def _maskGeometryCalculator(self, masked_ima):
+        coord = 'qualche operazione usando la maschera'
+        #ricordarsi di aggiungerle al salvataggio
+        return coord
 
+    def getMaskGeometry(self):
+        return self._coord
 
     def _readTypeFromFitsNameTag(self, amplitude_fits_file_name,
                                  cmd_matrix_fits_file_name):
@@ -155,11 +157,6 @@ class IFMaker():
         mb = ModalBase.loadFromFits(cmd_matrix_fits_file_name)
         cmd_matrix = mb.getModalBase()
         return amplitude, cmd_matrix
-
-    def analysis(self):
-        cube = self._createCube()
-        self._saveCube('Cube.fits')
-        return cube
 
     def _createCube(self):
         '''
@@ -286,11 +283,16 @@ class IFMaker():
         file_name = os.path.join(dove, cube_name)
         header = pyfits.Header()
         header['NPUSHPUL'] = self._nPushPull
+        header['TT_CMDH'] = self._tt_cmdH
+        header['CMDMTAG'] = self._cmdMatrixTag
+        header['AMPTAG'] = self._amplitudeTag
         header['NACTS'] = self._nActs
         pyfits.writeto(file_name, self._cube.data, header)
         pyfits.append(file_name, self._cube.mask.astype(int))
         pyfits.append(file_name, self._amplitude)
         pyfits.append(file_name, self._actsVector)
+        pyfits.append(file_name, self._template)
+        pyfits.append(file_name, self._indexingList)
 
     def getCube(self):
         '''
@@ -302,7 +304,7 @@ class IFMaker():
         return self._cube
 
     @staticmethod
-    def loadIFMaker(tt):
+    def loadAnalyzerFromIFMaker(tt):
         """ Creates the object using information contained in Cube
 
         Parameters
@@ -319,18 +321,19 @@ class IFMaker():
         file_name = os.path.join(theObject._storageFolder(), tt, 'Cube.fits')
         header = pyfits.getheader(file_name)
         hduList = pyfits.open(file_name)
-        cube = np.ma.masked_array(hduList[0].data,
+        theObject._cube = np.ma.masked_array(hduList[0].data,
                                   hduList[1].data.astype(bool))
-        cmd_amplitude = hduList[2].data
-        acts_vector = hduList[3].data
+        theObject._amplitude = hduList[2].data
+        theObject._actsVector = hduList[3].data
+        theObject._template = hduList[4].data
+        theObject._indexingList = hduList[5].data
         try:
-            n_push_pull = header['NPUSHPUL']
+            theObject._nPushPull = header['NPUSHPUL']
         except KeyError:
-            n_push_pull = 1
+            theObject._nPushPull = 1
 
         theObject._nActs = header['NACTS']
-        theObject._actsVector = acts_vector
-        theObject._amplitude = cmd_amplitude
-        theObject._nPushPull = n_push_pull
-        theObject._cube = cube
+        theObject._tt_cmdH = header['TT_CMDH']
+        theObject._cmdMatrixTag = header['CMDMTAG']
+        theObject._amplitudeTag = header['AMPTAG']
         return theObject

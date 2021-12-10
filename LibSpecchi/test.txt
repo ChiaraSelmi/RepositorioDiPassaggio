@@ -31,10 +31,14 @@ command_history_matrix_to_apply, iff._tt_cmdH = \
                                                     n_push_pull,
                                                     template)
 
-#tutto#
+#acquisizione ed analisi#
 modalBaseTag = 'Hadarmard10.fits'
 ampTag = 'ampTest10.fits'
 
-tt = iff.acquisition(1, modalBaseTag, ampTag, shuffle=False, template=None)
+tt = iff.acquisitionAndAnalysis(1, modalBaseTag, ampTag, shuffle=False, template=None)
 
-cube = iff.analysis()
+
+#converter#
+tt = '20211210_111951'
+from LibSpecchi.influenceFunctionsMaker import IFMaker
+an = IFMaker.loadAnalyzerFromIFMaker(tt)
