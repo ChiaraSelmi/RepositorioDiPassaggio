@@ -112,10 +112,12 @@ class IFMaker():
 
         n_images = 1
         for i in range(command_history_matrix_to_apply.shape[1]):
-            self._dm.setActsCommand(command_history_matrix_to_apply[:, i]) #vecchia setShape
-            masked_image = self._interf.acquire_phasemap(n_images)
-            file_name = 'image_%04d.fits' %i
-            self._interf.save_phasemap(dove, file_name, masked_image)
+            for j in range(self._template.shape[0]):
+                k = self._template.shape[0]*i +j
+                self._dm.setActsCommand(command_history_matrix_to_apply[:, i]*j) #vecchia setShape
+                masked_image = self._interf.acquire_phasemap(n_images)
+                file_name = 'image_%04d.fits' %k
+                self._interf.save_phasemap(dove, file_name, masked_image)
 
         self._coord = self._maskGeometryCalculator(masked_image)
 
@@ -177,36 +179,46 @@ class IFMaker():
                                                    self._indexingList,
                                                    self._amplitude,
                                                    self._nPushPull)
+
+        cube_all_act = []
         for i in range(self._actsVector.shape[0]):
             print(i)
             for k in range(self._nPushPull):
                 p = self._nPushPull * i + k
                 n = where[p]
                 mis_amp = k* self._indexingList.shape[1] + n
-                mis = k * self._indexingList.shape[1] * self._template.shape[0] \
-                        + n * self._template.shape[0]
+                mis_push = (k * self._indexingList.shape[1]+ n) * 2*self._template.shape[0]
+                mis_pull = self._template.shape[0] + mis_push
+                mis_list = [mis_push, mis_pull]
+                print(mis_list)
 
-                name = 'image_%04d.fits' %mis
-                file_name = os.path.join(self._storageFolder(), self._tt, name)
-                image0 = self._interf.readImage4D(file_name) #creare questa funzione nell'interf prendendola da ic
-                image_list = [image0]
-                for l in range(1, self._template.shape[0]):
-                    name = 'image_%04d.fits' %(mis+l)
+                pp_images = []
+                for mis in mis_list:
+                    name = 'image_%04d.fits' %mis
+                    print(name)
                     file_name = os.path.join(self._storageFolder(), self._tt, name)
-                    ima = self._interf.readImage4D(file_name)
-                    image_list.append(ima)
+                    image0 = self._interf.readImage4D(file_name) #creare questa funzione nell'interf prendendola da ic
+                    image_list = [image0]
+                    for l in range(1, self._template.shape[0]):
+                        name = 'image_%04d.fits' %(mis+l)
+                        print(name)
+                        file_name = os.path.join(self._storageFolder(), self._tt, name)
+                        ima = self._interf.readImage4D(file_name)
+                        image_list.append(ima)
 
-                image = np.zeros((image0.shape[0], image0.shape[1]))
-                for p in range(1, len(image_list)):
-                    opd2add = image_list[p] * self._template[p] + image_list[p-1] * self._template[p-1]
-                    master_mask2add = np.ma.mask_or(image_list[p].mask, image_list[p-1].mask)
-                    if p==1:
-                        master_mask = master_mask2add
-                    else:
-                        master_mask = np.ma.mask_or(master_mask, master_mask2add)
-                    image += opd2add
-                image = np.ma.masked_array(image, mask=master_mask)
+                    image = np.zeros((image0.shape[0], image0.shape[1]))
+                    for p in range(1, len(image_list)):
+                        opd2add = image_list[p] * self._template[p] + image_list[p-1] * self._template[p-1]
+                        master_mask2add = np.ma.mask_or(image_list[p].mask, image_list[p-1].mask)
+                        if p==1:
+                            master_mask = master_mask2add
+                        else:
+                            master_mask = np.ma.mask_or(master_mask, master_mask2add)
+                        image += opd2add
+                    image = np.ma.masked_array(image, mask=master_mask)
+                    pp_images.append(image)
                     #image = image + ima * self._template[l] #sbagliato
+                image = pp_images[0] + pp_images[1] #da rivedere molto
                 img_if = image / (2 * ampl_reorg[mis_amp] * (self._template.shape[0] - 1))
 
                 if_push_pull_kth = img_if
@@ -222,11 +234,12 @@ class IFMaker():
             else:
                 if_act_jth = np.ma.mean(all_push_pull_act_jth, axis=2)
 
-            if cube_all_act is None:
-                cube_all_act = if_act_jth
-            else:
-                cube_all_act = np.ma.dstack((cube_all_act, if_act_jth))
-        self._cube = cube_all_act
+            cube_all_act.append(if_act_jth)
+#             if cube_all_act is None:
+#                 cube_all_act = if_act_jth
+#             else:
+#                 cube_all_act = np.ma.dstack((cube_all_act, if_act_jth))
+        self._cube = np.ma.dstack(cube_all_act)
 
         return self._cube
 
@@ -234,7 +247,7 @@ class IFMaker():
         """ Returns the index position """
         indv = np.array(indexingList)
         where = []
-        for ind in actsVector:
+        for ind in range(actsVector.shape[0]):
             for j in range(nPushPull):
                 a = np.where(indv[j] == ind)
                 where.append(a[0][0])
