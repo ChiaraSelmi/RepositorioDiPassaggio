@@ -3,8 +3,8 @@ Authors
   - C. Selmi:  written in 2021
 '''
 import os
-import numpy as np
 import copy
+import numpy as np
 from astropy.io import fits as pyfits
 from LibSpecchi.type.modalAmplitude import ModalAmplitude
 from LibSpecchi.type.modalBase import ModalBase
@@ -12,7 +12,20 @@ from LibSpecchi.type.commandHistory import CmdHistory
 from Lib.tracking_number_folder import TtFolder
 
 class IFMaker():
-    '''
+    ''' Function for the acquisition of influence functions and
+    for the cube creation (interaction matrix)
+
+    HOW TO USE IT::
+
+        from ?.influenceFunctionsMaker import IFMaker
+        dm = qualcosa che crea lo specchio
+        interf = qualcosa che crea l'interferometro
+        iff = IFMaker(dm, interf)
+        modalBaseTag = 'Hadarmard10.fits'
+        ampTag = 'ampTest10.fits'
+
+        tt = iff.acquisitionAndAnalysis(1, modalBaseTag, ampTag,
+                                    shuffle=False, template=None)
     '''
 
     def __init__(self, deformable_mirror, interferometer):
@@ -45,8 +58,8 @@ class IFMaker():
         return '/Users/rm/Desktop/Arcetri/M4/Data/M4Data/OPTData/IFFunctions'
 
     def acquisitionAndAnalysis(self, n_push_pull, cmd_matrix_fits_file_name,
-                        amplitude_fits_file_name,
-                        shuffle=False, template=None):
+                               amplitude_fits_file_name,
+                               shuffle=False, template=None):
         '''
         Performs the process of acquiring interferograms
 
@@ -210,7 +223,7 @@ class IFMaker():
                     for p in range(1, len(image_list)):
                         opd2add = image_list[p] * self._template[p] + image_list[p-1] * self._template[p-1]
                         master_mask2add = np.ma.mask_or(image_list[p].mask, image_list[p-1].mask)
-                        if p==1:
+                        if p == 1:
                             master_mask = master_mask2add
                         else:
                             master_mask = np.ma.mask_or(master_mask, master_mask2add)
@@ -335,7 +348,7 @@ class IFMaker():
         header = pyfits.getheader(file_name)
         hduList = pyfits.open(file_name)
         theObject._cube = np.ma.masked_array(hduList[0].data,
-                                  hduList[1].data.astype(bool))
+                                             hduList[1].data.astype(bool))
         theObject._amplitude = hduList[2].data
         theObject._actsVector = hduList[3].data
         theObject._template = hduList[4].data

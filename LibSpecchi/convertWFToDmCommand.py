@@ -7,6 +7,11 @@ from LibSpecchi.influenceFunctionsMaker import IFMaker
 
 class Converter():
     '''
+    HOW TO USE IT::
+
+        from ?.convertWFToDmCommand import Converter
+        tt = '20211210_111951'
+        cc = Converter(tt)
     '''
 
     def __init__(self, tt_an):
@@ -44,8 +49,8 @@ class Converter():
         '''
         Returns
         -------
-                master_mask: [pixels, pixels]
-                            product of the masks of the cube
+        master_mask: [pixels, pixels]
+                    product of the masks of the cube
         '''
         aa = np.sum(self._cube.mask.astype(int), axis=2)
         master_mask = np.zeros(aa.shape, dtype=np.bool)
@@ -57,7 +62,7 @@ class Converter():
 
         Parameters
         ----------
-                analysis_mask: numpy array [pixels, pixels]
+        analysis_mask: numpy array [pixels, pixels]
         '''
         self._analysisMask = analysis_mask
 
@@ -81,7 +86,7 @@ class Converter():
         '''
         Returns
         -------
-            analysis_mask: numpy array [pixels, pixels]
+        analysis_mask: numpy array [pixels, pixels]
         '''
         return self._analysisMask
 
@@ -111,8 +116,8 @@ class Converter():
         '''
         Returns
         -------
-                intMat: numpy array
-                        interaction matrix from cube
+        intMat: numpy array
+                interaction matrix from cube
         '''
         if self._intMat is None:
             self._createInteractionMatrix()
@@ -122,8 +127,8 @@ class Converter():
         '''
         Returns
         -------
-                rec = numpy array
-                    reconstructor calculated as pseudo inverse of the interaction matrix
+        rec = numpy array
+            reconstructor calculated as pseudo inverse of the interaction matrix
         '''
         if self._rec is None:
             self._createSurfaceReconstructor()

@@ -39,8 +39,9 @@ tt = iff.acquisitionAndAnalysis(1, modalBaseTag, ampTag, shuffle=False, template
 
 
 #converter#
+from LibSpecchi.convertWFToDmCommand import Converter
 tt = '20211210_111951'
-
+cc = Converter(tt)
 
 
 
