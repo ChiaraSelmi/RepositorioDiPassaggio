@@ -7,6 +7,7 @@ from astropy.io import fits as pyfits
 import h5py
 import numpy as np
 from scipy.linalg import hadamard
+from LibSpecchi.configuration import config
 
 
 class ModalBase():
@@ -28,7 +29,8 @@ class ModalBase():
     @staticmethod
     def _storageFolder():
         """ Creates the path where to save data"""
-        return '/Users/rm/Desktop/Arcetri/M4/Data/M4Data/OPTData/ModalBase'
+        # '/Users/rm/Desktop/Arcetri/M4/Data/M4Data/OPTData/ModalBase'
+        return config.MODALBASE_ROOT_FOLDER
 
     def getHadamardMatrix(self, nActs):
         mat = hadamard(128)

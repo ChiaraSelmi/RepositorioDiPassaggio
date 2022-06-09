@@ -7,6 +7,7 @@ import os
 import numpy as np
 from astropy.io import fits as pyfits
 import h5py
+from LibSpecchi.configuration import config
 
 
 class ModalAmplitude():
@@ -28,7 +29,8 @@ class ModalAmplitude():
     @staticmethod
     def _storageFolder():
         """ Creates the path where to save data"""
-        return '/Users/rm/Desktop/Arcetri/M4/Data/M4Data/OPTData/ModalAmplitude'
+        # '/Users/rm/Desktop/Arcetri/M4/Data/M4Data/OPTData/ModalAmplitude'
+        return config.MODALAMPLITUDE_ROOT_FOLDER
 
     def getModalAmplitude(self):
         '''

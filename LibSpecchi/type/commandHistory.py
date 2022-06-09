@@ -8,7 +8,8 @@ import logging
 from astropy.io import fits as pyfits
 import h5py
 import numpy as np
-from Lib.tracking_number_folder import TtFolder
+from LibSpecchi.ground.tracking_number_folder import TtFolder
+from LibSpecchi.configuration import config
 
 
 class CmdHistory():
@@ -52,7 +53,8 @@ class CmdHistory():
     @staticmethod
     def _storageFolder():
         """ Creates the path where to save data"""
-        return '/Users/rm/Desktop/Arcetri/M4/Data/M4Data/OPTData/CommandHistory'
+        # '/Users/rm/Desktop/Arcetri/M4/Data/M4Data/OPTData/CommandHistory'
+        return config.COMMANDHISTORY_ROOT_FOLDER
 
 
     def tidyCommandHistoryMaker(self, mode_vector, amp_vector,

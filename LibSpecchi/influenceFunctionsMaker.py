@@ -9,7 +9,8 @@ from astropy.io import fits as pyfits
 from LibSpecchi.type.modalAmplitude import ModalAmplitude
 from LibSpecchi.type.modalBase import ModalBase
 from LibSpecchi.type.commandHistory import CmdHistory
-from Lib.tracking_number_folder import TtFolder
+from LibSpecchi.ground.tracking_number_folder import TtFolder
+from LibSpecchi.ground import temp
 
 class IFMaker():
     ''' Function for the acquisition of influence functions and
@@ -28,7 +29,7 @@ class IFMaker():
                                     shuffle=False, template=None)
     '''
 
-    def __init__(self, deformable_mirror, interferometer):
+    def __init__(self, interferometer, deformable_mirror=None):
         """The constructor """
         self._dm = deformable_mirror
         self._interf = interferometer
@@ -127,10 +128,10 @@ class IFMaker():
         for i in range(command_history_matrix_to_apply.shape[1]):
             for j in range(self._template.shape[0]):
                 k = self._template.shape[0]*i +j
-                self._dm.setActsCommand(command_history_matrix_to_apply[:, i]*j) #vecchia setShape
-                masked_image = self._interf.acquire_phasemap(n_images)
+                self._dm.set_shape(command_history_matrix_to_apply[:, i]*j) #vecchia setActsCommand
+                masked_image = self._interf.wavefront(n_images)
                 file_name = 'image_%04d.fits' %k
-                self._interf.save_phasemap(dove, file_name, masked_image)
+                temp.interf_save_phasemap(dove, file_name, masked_image)
 
         self._coord = self._maskGeometryCalculator(masked_image)
 
@@ -210,13 +211,13 @@ class IFMaker():
                     name = 'image_%04d.fits' %mis
                     print(name)
                     file_name = os.path.join(self._storageFolder(), self._tt, name)
-                    image0 = self._interf.readImage4D(file_name) #creare questa funzione nell'interf prendendola da ic
+                    image0 = temp.interf_readImage4D(file_name) #creare questa funzione nell'interf prendendola da ic
                     image_list = [image0]
                     for l in range(1, self._template.shape[0]):
                         name = 'image_%04d.fits' %(mis+l)
                         print(name)
                         file_name = os.path.join(self._storageFolder(), self._tt, name)
-                        ima = self._interf.readImage4D(file_name)
+                        ima = temp.interf_readImage4D(file_name)
                         image_list.append(ima)
 
                     image = np.zeros((image0.shape[0], image0.shape[1]))
