@@ -1,3 +1,13 @@
+import plico_dm
+dm = plico_dm.deformableMirror('193.206.155.78', 7000)
+import plico_interferometer
+interf = plico_interferometer.interferometer('193.206.155.78', 7300)
+
+
+
+
+
+
 class DMtest():
     def __init__(self):
         pass

@@ -11,6 +11,7 @@ from LibSpecchi.type.modalBase import ModalBase
 from LibSpecchi.type.commandHistory import CmdHistory
 from LibSpecchi.ground.tracking_number_folder import TtFolder
 from LibSpecchi.ground import temp
+from LibSpecchi.configuration import config
 
 class IFMaker():
     ''' Function for the acquisition of influence functions and
@@ -21,7 +22,7 @@ class IFMaker():
         from ?.influenceFunctionsMaker import IFMaker
         dm = qualcosa che crea lo specchio
         interf = qualcosa che crea l'interferometro
-        iff = IFMaker(dm, interf)
+        iff = IFMaker(interf, dm)
         modalBaseTag = 'Hadarmard10.fits'
         ampTag = 'ampTest10.fits'
 
@@ -34,7 +35,7 @@ class IFMaker():
         self._dm = deformable_mirror
         self._interf = interferometer
         if deformable_mirror is not None:
-            self._nActs = deformable_mirror.getNActs() #qualcosa del genere
+            self._nActs = deformable_mirror.get_number_of_actuators() #qualcosa del genere
 
         #acquisizione
         self._nPushPull = None
@@ -56,7 +57,8 @@ class IFMaker():
     @staticmethod
     def _storageFolder():
         """ Creates the path where to save measurement data"""
-        return '/Users/rm/Desktop/Arcetri/M4/Data/M4Data/OPTData/IFFunctions'
+        # '/Users/rm/Desktop/Arcetri/M4/Data/M4Data/OPTData/IFFunctions'
+        return config.IFFUNCTIONS_ROOT_FOLDER
 
     def acquisitionAndAnalysis(self, n_push_pull, cmd_matrix_fits_file_name,
                                amplitude_fits_file_name,
