@@ -38,7 +38,7 @@ class IFMaker():
             self._nActs = deformable_mirror.get_number_of_actuators() #qualcosa del genere
 
         #acquisizione
-        self._nPushPull = None
+        self._nRepetitions = None
         self._template = None
         self._amplitudeTag = None
         self._amplitude = None
@@ -60,7 +60,7 @@ class IFMaker():
         # '/Users/rm/Desktop/Arcetri/M4/Data/M4Data/OPTData/IFFunctions'
         return config.IFFUNCTIONS_ROOT_FOLDER
 
-    def acquisitionAndAnalysis(self, n_push_pull, cmd_matrix_fits_file_name,
+    def acquisitionAndAnalysis(self, n_rep, cmd_matrix_fits_file_name,
                                amplitude_fits_file_name,
                                shuffle=False, template=None):
         '''
@@ -94,7 +94,7 @@ class IFMaker():
         amplitude, cmd_matrix = self._readTypeFromFitsNameTag(amplitude_fits_file_name,
                                                               cmd_matrix_fits_file_name)
 
-        self._nPushPull = n_push_pull
+        self._nRepetitions = n_rep
         if template is None:
             self._template = np.array([1, -1, 1])
         else:
@@ -115,25 +115,23 @@ class IFMaker():
                     cmdH.tidyCommandHistoryMaker(self._actsVector,
                                                  amplitude,
                                                  cmd_matrix,
-                                                 n_push_pull,
+                                                 n_rep,
                                                  template)
         if shuffle is True:
             command_history_matrix_to_apply, self._tt_cmdH = \
                     cmdH.shuffleCommandHistoryMaker(self._actsVector,
                                                     amplitude,
                                                     cmd_matrix,
-                                                    n_push_pull,
+                                                    n_rep,
                                                     template)
         self._indexingList = cmdH.getIndexingList()
 
         n_images = 1
         for i in range(command_history_matrix_to_apply.shape[1]):
-            for j in range(self._template.shape[0]):
-                k = self._template.shape[0]*i +j
-                self._dm.set_shape(command_history_matrix_to_apply[:, i]*j) #vecchia setActsCommand
-                masked_image = self._interf.wavefront(n_images)
-                file_name = 'image_%04d.fits' %k
-                temp.interf_save_phasemap(dove, file_name, masked_image)
+            self._dm.set_shape(command_history_matrix_to_apply[:, i]) #vecchia setActsCommand
+            masked_image = self._interf.wavefront(n_images)
+            file_name = 'image_%04d.fits' %i
+            temp.interf_save_phasemap(dove, file_name, masked_image)
 
         self._coord = self._maskGeometryCalculator(masked_image)
 
@@ -190,51 +188,50 @@ class IFMaker():
 
         cube_all_act = None
         where = self._indexReorganization(self._indexingList, self._actsVector,
-                                          self._nPushPull)
+                                          self._nRepetitions)
         ampl_reorg = self._amplitudeReorganization(self._actsVector,
                                                    self._indexingList,
                                                    self._amplitude,
-                                                   self._nPushPull)
+                                                   self._nRepetitions)
 
         cube_all_act = []
         for i in range(self._actsVector.shape[0]):
             print(i)
-            for k in range(self._nPushPull):
-                p = self._nPushPull * i + k
+            for k in range(self._nRepetitions):
+                p = self._nRepetitions * i + k
                 n = where[p]
                 mis_amp = k* self._indexingList.shape[1] + n
-                mis_push = (k * self._indexingList.shape[1]+ n) * 2*self._template.shape[0]
-                mis_pull = self._template.shape[0] + mis_push
-                mis_list = [mis_push, mis_pull]
-                print(mis_list)
+                mis = (k * self._indexingList.shape[1]+ n) * self._template.shape[0]
+                #mis_pull = self._template.shape[0] + mis_push
+                #mis_list = [mis_push, mis_pull]
+                print(mis)
 
-                pp_images = []
-                for mis in mis_list:
-                    name = 'image_%04d.fits' %mis
+                #pp_images = []
+                name = 'image_%04d.fits' %mis
+                print(name)
+                file_name = os.path.join(self._storageFolder(), self._tt, name)
+                image0 = temp.interf_readImage(file_name) #creare questa funzione nell'interf prendendola da ic
+                image_list = [image0]
+                for l in range(1, self._template.size):
+                    name = 'image_%04d.fits' %(mis+l)
                     print(name)
                     file_name = os.path.join(self._storageFolder(), self._tt, name)
-                    image0 = temp.interf_readImage4D(file_name) #creare questa funzione nell'interf prendendola da ic
-                    image_list = [image0]
-                    for l in range(1, self._template.shape[0]):
-                        name = 'image_%04d.fits' %(mis+l)
-                        print(name)
-                        file_name = os.path.join(self._storageFolder(), self._tt, name)
-                        ima = temp.interf_readImage4D(file_name)
-                        image_list.append(ima)
+                    ima = temp.interf_readImage(file_name)
+                    image_list.append(ima)
 
-                    image = np.zeros((image0.shape[0], image0.shape[1]))
-                    for p in range(1, len(image_list)):
-                        opd2add = image_list[p] * self._template[p] + image_list[p-1] * self._template[p-1]
-                        master_mask2add = np.ma.mask_or(image_list[p].mask, image_list[p-1].mask)
-                        if p == 1:
-                            master_mask = master_mask2add
-                        else:
-                            master_mask = np.ma.mask_or(master_mask, master_mask2add)
-                        image += opd2add
-                    image = np.ma.masked_array(image, mask=master_mask)
-                    pp_images.append(image)
+                image = np.zeros((image0.shape[0], image0.shape[1]))
+                for p in range(1, len(image_list)):
+                    opd2add = image_list[p] * self._template[p] + image_list[p-1] * self._template[p-1]
+                    master_mask2add = np.ma.mask_or(image_list[p].mask, image_list[p-1].mask)
+                    if p == 1:
+                        master_mask = master_mask2add
+                    else:
+                        master_mask = np.ma.mask_or(master_mask, master_mask2add)
+                    image += opd2add
+                image = np.ma.masked_array(image, mask=master_mask)
+                #pp_images.append(image)
                     #image = image + ima * self._template[l] #sbagliato
-                image = pp_images[0] + pp_images[1] #da rivedere molto
+                #image = pp_images[0] + pp_images[1] #da rivedere molto
                 img_if = image / (2 * ampl_reorg[mis_amp] * (self._template.shape[0] - 1))
 
                 if_push_pull_kth = img_if
@@ -245,7 +242,7 @@ class IFMaker():
                     all_push_pull_act_jth = np.ma.dstack((all_push_pull_act_jth,
                                                           if_push_pull_kth))
 
-            if self._nPushPull == 1:
+            if self._nRepetitions == 1:
                 if_act_jth = all_push_pull_act_jth
             else:
                 if_act_jth = np.ma.mean(all_push_pull_act_jth, axis=2)
@@ -311,7 +308,7 @@ class IFMaker():
         dove = os.path.join(self._storageFolder(), self._tt)
         file_name = os.path.join(dove, cube_name)
         header = pyfits.Header()
-        header['NPUSHPUL'] = self._nPushPull
+        header['NREP'] = self._nRepetitions
         header['TT_CMDH'] = self._tt_cmdH
         header['CMDMTAG'] = self._cmdMatrixTag
         header['AMPTAG'] = self._amplitudeTag
@@ -357,9 +354,9 @@ class IFMaker():
         theObject._template = hduList[4].data
         theObject._indexingList = hduList[5].data
         try:
-            theObject._nPushPull = header['NPUSHPUL']
+            theObject._nRepetitions = header['NREP']
         except KeyError:
-            theObject._nPushPull = 1
+            theObject._nRepetitions = 1
 
         theObject._nActs = header['NACTS']
         theObject._tt_cmdH = header['TT_CMDH']

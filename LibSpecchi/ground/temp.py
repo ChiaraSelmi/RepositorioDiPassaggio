@@ -23,7 +23,7 @@ def interf_save_phasemap(location, file_name, masked_image):
     fits.writeto(fits_file_name, masked_image.data)
     fits.append(fits_file_name, masked_image.mask.astype(int))
 
-def interf_readImage4D(file_name):
+def interf_readImage4D4020(file_name):
     """
     Parameters
     ----------
@@ -42,3 +42,14 @@ def interf_readImage4D(file_name):
     ima = np.ma.masked_array(data * 632.8e-9, mask=mask)
     return ima
 
+def interf_readImage(file_name):
+    '''
+    Parameters
+    ----------
+    file_name: string
+        fits file path name of image to read
+    '''
+    hduList = fits.open(file_name)
+    masked_ima = np.ma.masked_array(hduList[0].data,
+                                    hduList[1].data.astype(bool))
+    return masked_ima

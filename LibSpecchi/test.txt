@@ -4,24 +4,50 @@ import plico_interferometer
 interf = plico_interferometer.interferometer('193.206.155.78', 7300)
 
 
-
+### test command history matrix ###
+from LibSpecchi.type.commandHistory import CmdHistory
+ch = CmdHistory(10)
+self = ch
+amp_vector = np.zeros(10)+7
+mat = np.zeros((10,10))
+for i in range(10): 
+     mat[i,i]=1 
+cmd_matrix = mat
+n_rep = 1
+mode_vector = np.arange(10)
+template = None
+###############
 
 
 
 class DMtest():
     def __init__(self):
         pass
-    def getNActs(self):
+    def get_number_of_actuators(self):
         acts = 10
         return acts
-    def setActsCommand(self, cmd):
+    def set_shape(self, cmd):
     	pass
+
+class InterfTest():
+    def __init__(self): 
+        pass 
+    def wavefront(self, n_images=1):
+        from astropy.io import fits as pyfits
+        aa = '/Users/rm/Desktop/Arcetri/M4/Data/M4Data/OPTData/IFFunctions/20211212_163439/image_0043.fits'
+        hduList = pyfits.open(aa) 
+        data = hduList[0].data
+        mask = hduList[1].data
+        masked_ima = np.ma.masked_array(data, mask= mask)
+        return masked_ima
+
+#conf = '/Users/rm/eclipse-workspace/M4/m4/configuration/myConfig.yaml'
+#from m4.configuration import start
+#ott, interf = start.create_ott(conf)
 from LibSpecchi.influenceFunctionsMaker import IFMaker
-conf = '/Users/rm/eclipse-workspace/M4/m4/configuration/myConfig.yaml'
-from m4.configuration import start
-ott, interf = start.create_ott(conf)
 dm = DMtest()
-iff = IFMaker(dm, interf)
+interf = InterfTest()
+iff = IFMaker(interf, dm)
 
 
 #pezzetto matrice di comandi#
@@ -29,7 +55,7 @@ cmd_matrix = iff._cmdMatrix #iff.getHadamardMatrix()
 amplitude = np.arange(10)
 iff._actsVector = np.arange(iff._nActs)
 template = np.array([1, -1, 1])
-n_push_pull = 1
+n_rep = 1
 
 from LibSpecchi.type.commandHistory import CmdHistory
 cmdH = CmdHistory(iff._nActs)

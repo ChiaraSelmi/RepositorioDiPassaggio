@@ -27,10 +27,13 @@ class CmdHistory():
         self._logger = logging.getLogger('CMD_HISTORY:')
         self._nActs = nActs
         self._modeVector = None
-        self._nPushPull = None
+        self._template = None
         self._cmdMatrix = None
-        self._cmdHToApply = None
         self._ampVect = None
+        self._nRepetitions = None
+        #costruite dati gli input
+        self._cmdSequence = None
+        self._cmdHToApply = None
 
     def getCommandHistory(self):
         '''
@@ -58,7 +61,7 @@ class CmdHistory():
 
 
     def tidyCommandHistoryMaker(self, mode_vector, amp_vector,
-                                cmd_matrix, n_push_pull, template=None):
+                                cmd_matrix, n_rep, template=None):
         '''
         Parameters
         ----------
@@ -69,8 +72,8 @@ class CmdHistory():
             cmdMatrix: numpy array [nActs x nModes]
                         mode command matrix
                         diagonal matrix in case of zonal commands
-            n_push_pull: int
-                        number of push pull for actuatores 
+            n_rep: int
+                        number of repetitions for each measurement mode 
         Other Parameters
         ----------
             template: numpy array  , optional
@@ -78,27 +81,26 @@ class CmdHistory():
                     (es. np.array([1, -1, 1]))
         Returns
         -------
-             matrixToApply: numpy array [nAct, nModes x nPushPusll x 2]
+             matrixToApply: numpy array [nAct, nModes x n_rep x template.size]
                             tidy command history
              tt: string
                  tracking number
         '''
         self._ampVect = amp_vector
-        cmd_history = self._tidyCmdHistory(mode_vector, n_push_pull, cmd_matrix)
-        aa = np.arange(self._cmdHistory.shape[1])
-        bb = np.tile(amp_vector, n_push_pull)
+        self._cmdSequence = self._tidyCmdSequence(mode_vector, n_rep, cmd_matrix)
+        aa = np.arange(self._cmdSequence.shape[1])
+        bb = np.tile(amp_vector, n_rep)
         zipped = zip(aa, bb)
-        matrix_to_apply = self._cmdHistoryToApply(zipped, template)
-        self._cmdHToApply = matrix_to_apply
+        self._cmdHToApply = self._cmdHistoryToApply(zipped, template)
         tt = self.saveInfo(0)
         self._logger.info('Creation of the ordered commandHistoryMatrix %s', tt)
         print(tt)
 
-        return matrix_to_apply, tt
+        return self._cmdHToApply, tt
 
 
     def shuffleCommandHistoryMaker(self, mode_vector, amp_vector,
-                                   cmd_matrix, n_push_pull, template=None):
+                                   cmd_matrix, n_rep, template=None):
         '''
         Parameters
         ----------
@@ -109,8 +111,8 @@ class CmdHistory():
             cmdMatrix: numpy array [nActs x nModes]
                         mode command matrix
                         diagonal matrix in case of zonal commands
-            n_push_pull: int
-                        number of push pull for actuatores 
+            n_rep: int
+                        number of repetitions for each measurement mode 
         Other Parameters
         ----------
             template: numpy array  , optional
@@ -118,33 +120,34 @@ class CmdHistory():
                     (es. np.array([1, -1, 1]))
         Returns
         -------
-             matrixToApply: numpy array [nAct, nModes x nPushPusll x 2]
+             matrixToApply: numpy array [nAct, nModes x n_rep x template.size]
                             shuffle command history
              tt: string
                  tracking number
         '''
         self._ampVect = amp_vector
-        cmd_history, indexing_list = self._shuffleCmdHistory(
-            mode_vector, n_push_pull, cmd_matrix)
+        self._cmdSequence, self._indexingList = self._shuffleCmdSequence(
+            mode_vector, n_rep, cmd_matrix)
         zipped = self._zippedAmplitude(amp_vector)
-        matrix_to_apply = self._cmdHistoryToApply(zipped, template)
-        self._cmdHToApply = matrix_to_apply
+        self._cmdHToApply = self._cmdHistoryToApply(zipped, template)
         tt = self.saveInfo(0)
         self._logger.info('Creation of the shuffle commandHistoryMatrix %s', tt)
         print(tt)
 
-        return matrix_to_apply, tt
+        return self._cmdHToApply, tt
 
-    def _shuffleCmdHistory(self, mode_vector, n_push_pull, cmd_matrix):
+    def _shuffleCmdSequence(self, mode_vector, n_rep, cmd_matrix):
+        ''' Usa il numero di ripetioni e crea la sequenza dei comandi
+        '''
         self._modeVector = copy.copy(mode_vector)
-        self._nPushPull = n_push_pull
+        self._nRepetitions = n_rep
         self._cmdMatrix = cmd_matrix
 
-        n_frame = mode_vector.size * n_push_pull
-        matrix_to_apply = np.zeros((self._nActs, n_frame))
+        n_frame = mode_vector.size * n_rep
+        matrix_for_seq = np.zeros((self._nActs, n_frame))
 
         indexingList = []
-        for j in range(n_push_pull):
+        for j in range(n_rep):
             np.random.shuffle(mode_vector)
             indexingList.append(list(mode_vector))
 
@@ -155,40 +158,42 @@ class CmdHistory():
 
             for i in range(len(cmdList)):
                 k = len(cmdList)*j + i
-                matrix_to_apply.T[k] = cmdList[i]
+                matrix_for_seq.T[k] = cmdList[i]
 
-        self._cmdHistory = matrix_to_apply
-        self._indexingList = np.array(indexingList)
+        cmdSequence = matrix_for_seq
+        indexingVec = np.array(indexingList)
 
-        return self._cmdHistory, self._indexingList
+        return cmdSequence, indexingVec
 
 
-    def _tidyCmdHistory(self, mode_vector, n_push_pull, cmd_matrix):
+    def _tidyCmdSequence(self, mode_vector, n_rep, cmd_matrix):
+        ''' Usa il numero di ripetioni e crea la sequenza dei comandi
+        '''
         self._modeVector = copy.copy(mode_vector)
-        self._nPushPull = n_push_pull
+        self._nRepetitions = n_rep
         self._cmdMatrix = cmd_matrix
         indList = []
-        for i in range(n_push_pull):
+        for i in range(n_rep):
             indList.append(mode_vector)
         self._indexingList = np.array(indList)
         #self._indexingList= np.tile(mode_vector, n_push_pull)
 
-        n_frame = mode_vector.size * n_push_pull
-        matrix_to_apply = np.zeros((self._nActs, n_frame))
+        n_frame = mode_vector.size * n_rep
+        matrix_for_seq = np.zeros((self._nActs, n_frame))
 
         cmdList = []
         for i in mode_vector:
             cmd = cmd_matrix[:, i]
             cmdList.append(cmd)
 
-        for j in range(n_push_pull):
+        for j in range(n_rep):
             for i in range(len(cmdList)):
                 k = len(cmdList)*j + i
-                matrix_to_apply.T[k] = cmdList[i]
+                matrix_for_seq.T[k] = cmdList[i]
 
-        self._cmdHistory = matrix_to_apply
+        cmdSequence = matrix_for_seq
 
-        return self._cmdHistory
+        return cmdSequence
 
 
     def _amplitudeReorganization(self, indexing_input, indexing_list,
@@ -213,31 +218,35 @@ class CmdHistory():
 
 
     def _zippedAmplitude(self, amplitude):
-        aa = np.arange(self._cmdHistory.shape[1])
+        aa = np.arange(self._cmdSequence.shape[1])
         reorganized_amplitude = \
                 self._amplitudeReorganization(self._modeVector,
                                               self._indexingList,
                                               amplitude,
-                                              self._nPushPull)
+                                              self._nRepetitions)
         #zipped= np.dstack((aa, reorganized_amplitude))
         zipped = zip(aa, reorganized_amplitude)
         return zipped
 
     def _cmdHistoryToApply(self, zipped, template=None):
-        matrix_with_amp = self._cmdHistory
+        ''' Usa l'informazione sul template per creare la sequenza di comandi
+        da applicare allo specchio (il numero di ripetioni è già stato usato
+        in precedenza per creare 
+        '''
+        matrix_with_amp = self._cmdSequence
         for i, amp in zipped:
             matrix_with_amp.T[i] = matrix_with_amp.T[i] * amp
 
         if template is None:
-            template = np.array((1, -1))
+            template = np.array((1, -1, 1))
         else:
             template = template
 
         matrix_to_apply = np.zeros((self._nActs,
-                                    self._cmdHistory.shape[1] *
+                                    self._cmdSequence.shape[1] *
                                     template.shape[0]))
 
-        for i in range(self._cmdHistory.shape[1]):
+        for i in range(self._cmdSequence.shape[1]):
             j = template.shape[0] * i
             for k in range(template.shape[0]):
                 matrix_to_apply.T[j+k] = matrix_with_amp.T[i]* template[k]
@@ -259,7 +268,7 @@ class CmdHistory():
         if fits_or_h5 == 0:
             fits_file_name = os.path.join(dove, 'info.fits')
             header = pyfits.Header()
-            header['NPUSHPUL'] = self._nPushPull
+            header['NREP'] = self._nRepetitions
             pyfits.writeto(fits_file_name, self._modeVector, header)
             pyfits.append(fits_file_name, self._indexingList, header)
             pyfits.append(fits_file_name, self._cmdMatrix, header)
@@ -272,7 +281,7 @@ class CmdHistory():
             hf.create_dataset('dataset_2', data=self._indexingList)
             hf.create_dataset('dataset_3', data=self._cmdHToApply)
             hf.create_dataset('dataset_4', data=self._ampVect)
-            hf.attrs['NPUSHPUL'] = self._nPushPull
+            hf.attrs['NREP'] = self._nRepetitions
             hf.close()
         return tt
 
@@ -304,9 +313,9 @@ class CmdHistory():
             theObject._cmdHToApply = hduList[3].data
             theObject._ampVect = hduList[4].data
             try:
-                theObject._nPushPull = header['NPUSHPUL']
+                theObject._nRepetitions = header['NREP']
             except KeyError:
-                theObject._nPushPull = 1
+                theObject._nRepetitions = 1
         else:
             file_name = os.path.join(folder, 'info.h5')
             hf = h5py.File(file_name, 'r')
@@ -315,7 +324,7 @@ class CmdHistory():
             data2 = hf.get('dataset_2')
             data3 = hf.get('dataset_3')
             data4 = hf.get('dataset_4')
-            theObject._nPushPull = hf.attrs['NPUSHPUL']
+            theObject._nRepetitions = hf.attrs['NREP']
             theObject._modeVector = np.array(data1)
             theObject._indexingList = np.array(data2)
             theObject._cmdHToApply = np.array(data3)
