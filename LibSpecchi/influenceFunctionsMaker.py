@@ -60,8 +60,8 @@ class IFMaker():
         # '/Users/rm/Desktop/Arcetri/M4/Data/M4Data/OPTData/IFFunctions'
         return config.IFFUNCTIONS_ROOT_FOLDER
 
-    def acquisitionAndAnalysis(self, n_rep, cmd_matrix_fits_file_name,
-                               amplitude_fits_file_name,
+    def acquisitionAndAnalysis(self, n_rep, cmd_matrix_tag,
+                               amplitude_tag,
                                shuffle=False, template=None):
         '''
         Performs the process of acquiring interferograms
@@ -70,10 +70,10 @@ class IFMaker():
         ----------
              n_push_pull: int
                           number of push pull for each mode
-             amplitude_fits_file_name: string
+             amplitude_tag: string
                                        fits file name
                                        (Example = 'amp.fits' a vector of shape nActs)
-             cmd_matrix_fits_file_name: string
+             cmd_matrix_tag: string
                                         fits file name
                                         (Example = 'modalBase.fits' matrix of shape nActs x nActs)
         Other Parameters
@@ -91,22 +91,22 @@ class IFMaker():
                 tt: string
                     tracking number of measurements made
         '''
-        amplitude, cmd_matrix = self._readTypeFromFitsNameTag(amplitude_fits_file_name,
-                                                              cmd_matrix_fits_file_name)
+        amplitude, cmd_matrix = self._readTypeFromFitsNameTag(amplitude_tag,
+                                                              cmd_matrix_tag)
 
         self._nRepetitions = n_rep
         if template is None:
             self._template = np.array([1, -1, 1])
         else:
             self._template = template
-        self._amplitudeTag = amplitude_fits_file_name
+        self._amplitudeTag = amplitude_tag
         self._amplitude = amplitude
-        self._cmdMatrixTag = cmd_matrix_fits_file_name
+        self._cmdMatrixTag = cmd_matrix_tag
         self._cmdMatrix = cmd_matrix
 
         self._actsVector = np.arange(self._nActs)
         indexing_input = copy.copy(self._actsVector)
-        dove, tt = TtFolder(self._storageFolder())._createFolderToStoreMeasurements()
+        dove, tt = TtFolder(self._storageFolder()).createFolderToStoreMeasurements()
         self._tt = tt
 
         cmdH = CmdHistory(self._nActs)

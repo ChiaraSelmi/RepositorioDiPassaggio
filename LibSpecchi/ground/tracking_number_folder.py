@@ -13,7 +13,7 @@ class TtFolder():
         self._rootStoreFolder = store_in_folder
 
 
-    def _createFolderToStoreMeasurements(self):
+    def createFolderToStoreMeasurements(self):
         """
         returns:
             dove = all path generated

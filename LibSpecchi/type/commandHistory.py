@@ -32,6 +32,7 @@ class CmdHistory():
         self._ampVect = None
         self._nRepetitions = None
         #costruite dati gli input
+        self._indexingList = None
         self._cmdSequence = None
         self._cmdHToApply = None
 
@@ -263,7 +264,7 @@ class CmdHistory():
             tracking number
         """
         store_in_folder = CmdHistory._storageFolder()
-        dove, tt = TtFolder(store_in_folder)._createFolderToStoreMeasurements()
+        dove, tt = TtFolder(store_in_folder).createFolderToStoreMeasurements()
 
         if fits_or_h5 == 0:
             fits_file_name = os.path.join(dove, 'info.fits')

@@ -74,7 +74,7 @@ class ModalAmplitude():
         store_in_folder = ModalAmplitude._storageFolder()
         filename = tag + '.fits'
         fits_file_name = os.path.join(store_in_folder, filename)
-        pyfits.writeto(fits_file_name, modal_amplitude)
+        pyfits.writeto(fits_file_name, modal_amplitude, overwrite=True)
 
     def saveAsH5(self, tag, modal_amplitude):
         ''' Save the data in h5 format
@@ -108,7 +108,7 @@ class ModalAmplitude():
         """
         theObject = ModalAmplitude()
         store_in_folder = ModalAmplitude._storageFolder()
-        all_fits_file_name = os.path.join(store_in_folder, fits_file_name)
+        all_fits_file_name = os.path.join(store_in_folder, fits_file_name + '.fits')
         hduList = pyfits.open(all_fits_file_name)
         theObject._modalAmplitude = hduList[0].data
         theObject._fitsfilename = fits_file_name

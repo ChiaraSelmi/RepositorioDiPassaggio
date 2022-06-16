@@ -14,4 +14,6 @@ MODALBASE_ROOT_FOLDER = os.path.join(ROOT_FOLDER, 'ModalBase')
 COMMANDHISTORY_ROOT_FOLDER = os.path.join(ROOT_FOLDER, 'CommandHistory')
 IFFUNCTIONS_ROOT_FOLDER = os.path.join(ROOT_FOLDER, 'IFFunctions')
 FLAT_ROOT_FOLD = os.path.join(ROOT_FOLDER, 'Flattening')
-CommandHistory = os.path.join(ROOT_FOLDER, 'OPD_series')
+
+OPD_SERIES_ROOT_FOLD = os.path.join(ROOT_FOLDER, 'OPD_series')
+LINEARITY_ROOT_FOLD = os.path.join(ROOT_FOLDER, 'Linearity')

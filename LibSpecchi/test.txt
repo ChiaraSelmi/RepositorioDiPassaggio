@@ -68,8 +68,8 @@ command_history_matrix_to_apply, iff._tt_cmdH = \
                                                     template)
 
 #acquisizione ed analisi#
-modalBaseTag = 'Hadarmard10.fits'
-ampTag = 'ampTest10.fits'
+modalBaseTag = 'Hadarmard10'
+ampTag = 'ampTest10'
 
 tt = iff.acquisitionAndAnalysis(1, modalBaseTag, ampTag, shuffle=False, template=None)
 
@@ -80,6 +80,14 @@ tt = '20211210_111951'
 cc = Converter(tt)
 
 
+## test linearità ##
+cmd_tag = 'linmat' nota: ho crato la matrice 10x10 con 1 sugli attuatori 3, 7, 9
+dm = DMtest()
+interf = InterfTest()
+
+from LibSpecchi.characterisation.measurements import MeasurementAcquisition 
+meas = MeasurementAcquisition(dm, interf, '20220614_154718')
+tn = meas.linearity('linmat', np.array([0.1, 0.2]))
 
 #test per coordinate#
 ima = np.random.random((512, 512))
