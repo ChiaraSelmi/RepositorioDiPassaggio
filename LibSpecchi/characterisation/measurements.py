@@ -14,13 +14,31 @@ from LibSpecchi.ground.tracking_number_folder import TtFolder
 from LibSpecchi.configuration import config
 from LibSpecchi.type.modalBase import ModalBase
 from LibSpecchi.type.modalAmplitude import ModalAmplitude
+from LibSpecchi.convertWFToDmCommand import Converter
 
 class MeasurementAcquisition():
 
     def __init__(self, deformable_mirror, interferometer, tn_iff):
         self.dm = deformable_mirror
         self.interf = interferometer
-        self.an = IFMaker.loadAnalyzerFromIFMaker(tn_iff)
+        self.converter = Converter(tn_iff)
+
+    def flattening(self, command):
+        pos = self.dm.get_shape()
+        cmd_to_apply = pos + command
+        maxComm = max(abs(cmd_to_apply))
+        print('max command= %f' % maxComm)
+
+        if maxComm>0.9:
+            raise OSError('Actuator command too large')
+        else:
+            self.dm.set_shape(cmd_to_apply)
+
+    def closeLoop(self, n_meas):
+        for i in range(0, n_meas):
+            wf = self.interf.wavefront()
+            cmd = self.converter.fromWfToDmCommand(wf) * -1.
+            self.flattening(cmd)
 
     def opticalMonitoring(self, n_images, delay):
         '''
