@@ -330,7 +330,7 @@ class IFMaker():
         return self._cube
 
     @staticmethod
-    def loadAnalyzerFromIFMaker(tt):
+    def loadAnalyzerFromIFMaker(tt, storageFolder=None):
         """ Creates the object using information contained in Cube
 
         Parameters
@@ -345,6 +345,8 @@ class IFMaker():
         """
         theObject = IFMaker(None, None)
         file_name = os.path.join(theObject._storageFolder(), tt, 'Cube.fits')
+        if storageFolder is not None:
+            file_name = os.path.join(storageFolder, tt, 'Cube.fits')
         header = pyfits.getheader(file_name)
         hduList = pyfits.open(file_name)
         theObject._cube = np.ma.masked_array(hduList[0].data,

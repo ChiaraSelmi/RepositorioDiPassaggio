@@ -63,6 +63,22 @@ class MeasurementAcquisition():
         '''
         la cmd matrix se la costruisce l'utente mettendo 1 agli attuatori che vuole
         misurare. L'ampiezza la creo io.
+        Nella cartella finale sono comprese una cartella per ogni valore di amp
+        presente nel vettore in ingresso dato che per ogni amp si usa l'iffMaker
+
+        Parameters
+        ----------
+        cmd_matrix_tag: string
+            tag for command matrix containing 1 on the diagonal for the actuators
+            to be used
+        vector_of_amplitude_for_meas: numpy array
+            vector containing the amplitude values to be given to the actuators
+            to make the measurement
+
+        Returns
+        -------
+        tt = string
+            tracking number of measurements
         '''
         mb = ModalBase.loadFromFits(cmd_matrix_tag)
         cmd_matrix = mb.getModalBase()
@@ -87,5 +103,7 @@ class MeasurementAcquisition():
             source = os.path.join(iff._storageFolder(), tn)
             destination = dove
             shutil.move(source, destination)
+        fits.writeto(os.path.join(dove, 'amplitude.fits'),
+                     vector_of_amplitude_for_meas, overwrite=True)
         return tt
 
