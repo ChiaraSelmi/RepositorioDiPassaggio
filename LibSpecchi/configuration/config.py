@@ -17,3 +17,6 @@ FLAT_ROOT_FOLD = os.path.join(ROOT_FOLDER, 'Flattening')
 
 OPD_SERIES_ROOT_FOLD = os.path.join(ROOT_FOLDER, 'OPD_series')
 LINEARITY_ROOT_FOLD = os.path.join(ROOT_FOLDER, 'Linearity')
+
+
+MAX_COMMAND_TO_APPLY = config['constant']['max_command_to_apply']

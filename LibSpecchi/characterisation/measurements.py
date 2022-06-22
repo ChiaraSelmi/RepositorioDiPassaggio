@@ -29,16 +29,32 @@ class MeasurementAcquisition():
         maxComm = max(abs(cmd_to_apply))
         print('max command= %f' % maxComm)
 
-        if maxComm>0.9:
+        if maxComm>config.MAX_COMMAND_TO_APPLY:
             raise OSError('Actuator command too large')
         else:
             self.dm.set_shape(cmd_to_apply)
 
+        self._commandToApply = cmd_to_apply
+
     def closeLoop(self, n_meas):
+        tt_list = []
         for i in range(0, n_meas):
+            fold_for_meas = config.FLAT_ROOT_FOLD
+            dove, tt = TtFolder(fold_for_meas).createFolderToStoreMeasurements()
             wf = self.interf.wavefront()
             cmd = self.converter.fromWfToDmCommand(wf) * -1.
+            fits.writeto(dove + 'imgstart.fits', wf.data)
+            fits.append(dove + 'imgstart.fits', wf.mask.astype(int))
+            fits.writeto(dove + 'flatDeltaCommand.fits', cmd)
+
             self.flattening(cmd)
+            wf = self.interf.wavefront()
+            fits.writeto(dove + 'imgflat.fits', wf.data)
+            fits.append(dove + 'imgflat.fits', wf.mask.astype(int))
+
+            fits.writeto(dove + 'flatCommand.fits', self._commandToApply)
+            tt_list.append(tt)
+        return tt_list
 
     def opticalMonitoring(self, n_images, delay):
         '''
