@@ -37,6 +37,11 @@ class ModalBase():
         hadaMat = mat[0:nActs, 0:nActs]
         return hadaMat
 
+    def getZonalMatrix(self, nActs):
+        mat = np.zeros((nActs, nActs))
+        np.fill_diagonal(mat, 1)
+        return mat
+
     def getModalBase(self):
         '''
         Returns
