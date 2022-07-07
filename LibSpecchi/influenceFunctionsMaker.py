@@ -60,9 +60,9 @@ class IFMaker():
         # '/Users/rm/Desktop/Arcetri/M4/Data/M4Data/OPTData/IFFunctions'
         return config.IFFUNCTIONS_ROOT_FOLDER
 
-    def acquisitionAndAnalysis(self, n_rep, cmd_matrix_tag,
+    def acquisitionAndAnalysis(self, cmd_matrix_tag,
                                amplitude_tag,
-                               shuffle=False, template=None):
+                               shuffle=False, template=None, n_rep=1):
         '''
         Performs the process of acquiring interferograms
 
