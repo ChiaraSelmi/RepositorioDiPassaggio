@@ -43,18 +43,19 @@ class MeasurementAcquisition():
             self.dm.set_shape(cmd_to_apply)
 
         self._commandToApply = cmd_to_apply
-        return dove
+        
+        wf = self.interf.wavefront()
+        fits.writeto(dove + 'imgflat.fits', wf.data)
+        fits.append(dove + 'imgflat.fits', wf.mask.astype(int))
+
+        fits.writeto(dove + 'flatCommand.fits', self._commandToApply)
+        return tt
 
     def closeLoop(self, n_meas):
         tt_list = []
         for i in range(0, n_meas):
-            dove = self.flattening()
-            wf = self.interf.wavefront()
-            fits.writeto(dove + 'imgflat.fits', wf.data)
-            fits.append(dove + 'imgflat.fits', wf.mask.astype(int))
-
-            fits.writeto(dove + 'flatCommand.fits', self._commandToApply)
-            tt_list.append(dove.split[-1])
+            tt = self.flattening()
+            tt_list.append(tt)
         return tt_list
 
     def opticalMonitoring(self, n_images, delay):
