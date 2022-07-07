@@ -38,7 +38,7 @@ class MeasurementAcquisition():
         if maxComm>config.MAX_COMMAND_TO_APPLY:
             raise OSError('Actuator command too large')
         else:
-            self.dm.set_shape(cmd_to_apply)
+            self.dm.set_shape(-cmd_to_apply)
 
         self._commandToApply = cmd_to_apply
 
@@ -48,7 +48,7 @@ class MeasurementAcquisition():
             fold_for_meas = config.FLAT_ROOT_FOLD
             dove, tt = TtFolder(fold_for_meas).createFolderToStoreMeasurements()
             wf = self.interf.wavefront()
-            cmd = self.converter.fromWfToDmCommand(wf) * -1.
+            cmd = self.converter.fromWfToDmCommand(wf)
             fits.writeto(dove + 'imgstart.fits', wf.data)
             fits.append(dove + 'imgstart.fits', wf.mask.astype(int))
             fits.writeto(dove + 'flatDeltaCommand.fits', cmd)
@@ -135,9 +135,8 @@ class MeasurementAcquisition():
         fold_for_meas = config.LINEARITY_ROOT_FOLD
         dove, tt = TtFolder(fold_for_meas).createFolderToStoreMeasurements()
         iff = IFMaker(self.interf, self.dm)
-        n_rep = 1
         for amp in amp_list_tag:
-            tn = iff.acquisitionAndAnalysis(n_rep, cmd_matrix_tag,
+            tn = iff.acquisitionAndAnalysis(cmd_matrix_tag,
                                             amp, shuffle=False,
                                             template=None)
             source = os.path.join(iff._storageFolder(), tn)
