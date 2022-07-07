@@ -23,7 +23,13 @@ class MeasurementAcquisition():
         self.interf = interferometer
         self.converter = Converter(tn_iff)
 
-    def flattening(self, command):
+    def flattening(self, cmd=None):
+        if cmd is None:
+            wf = self.interf.wavefront()
+            command = self.converter.fromWfToDmCommand(wf)
+        else:
+            command = cmd
+
         pos = self.dm.get_shape()
         cmd_to_apply = pos + command
         maxComm = max(abs(cmd_to_apply))
